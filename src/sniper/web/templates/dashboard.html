@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="30">
+    <title>eBay Sniper Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        .status-bar {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        .status-item { display: flex; align-items: center; gap: 5px; }
+        .status-ok { color: #28a745; }
+        .status-warn { color: #ffc107; }
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 { color: #333; margin-bottom: 15px; }
+        form { display: flex; gap: 10px; flex-wrap: wrap; }
+        input, button {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        input[type="text"] { flex: 2; min-width: 200px; }
+        input[type="number"] { flex: 1; min-width: 100px; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover { background: #0056b3; }
+        button.cancel { background: #dc3545; }
+        button.cancel:hover { background: #c82333; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th { background: #f8f9fa; font-weight: 600; }
+        .time-urgent { color: #dc3545; font-weight: 600; }
+        .time-soon { color: #ffc107; font-weight: 600; }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .badge-active { background: #d4edda; color: #155724; }
+        .badge-won { background: #cce5ff; color: #004085; }
+        .badge-lost { background: #e2e3e5; color: #383d41; }
+        .badge-cancelled { background: #f8d7da; color: #721c24; }
+        .empty { text-align: center; color: #999; padding: 40px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>eBay Sniper Dashboard</h1>
+            <div class="status-bar">
+                <div class="status-item">
+                    <span>Environment:</span>
+                    <span>{{ status.environment }}</span>
+                </div>
+                <div class="status-item">
+                    <span>NTP:</span>
+                    <span class="status-ok" if status.ntp_synced else "status-warn">
+                        {{ "Synced" if status.ntp_synced else "Not synced" }}
+                        {% if status.ntp_synced %}(offset: {{ "%.3f"|format(status.ntp_offset) }}s){% endif %}
+                    </span>
+                </div>
+                <div class="status-item">
+                    <span>Bids:</span>
+                    <span class="status-warn">STUBBED</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="card">
+            <h2>Add New Watch</h2>
+            <form action="/api/watches" method="post" id="watchForm">
+                <input
+                    type="text"
+                    name="item_id"
+                    placeholder="eBay item ID or URL (e.g., 287456575036 or https://www.ebay.co.uk/itm/123456)"
+                    required
+                >
+                <input
+                    type="number"
+                    name="max_bid"
+                    placeholder="Max bid (£)"
+                    step="0.01"
+                    required
+                >
+                <button type="submit">Add Watch</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Active Watches ({{ watches|length }})</h2>
+            {% if watches %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Item ID</th>
+                        <th>End Time</th>
+                        <th>Time Remaining</th>
+                        <th>Max Bid</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for watch in watches %}
+                    <tr>
+                        <td><a href="https://www.ebay.co.uk/itm/{{ watch.legacy_item_id }}" target="_blank">{{ watch.title }}</a></td>
+                        <td><code>{{ watch.legacy_item_id }}</code></td>
+                        <td>{{ watch.auction_end_time }}</td>
+                        <td>
+                            {% if watch.time_remaining is defined %}
+                                {% if watch.time_remaining > 3600 %}
+                                    {{ "%.0f"|format(watch.time_remaining / 3600) }}h
+                                {% elif watch.time_remaining > 60 %}
+                                    {{ "%.0f"|format(watch.time_remaining / 60) }}m
+                                {% elif watch.time_remaining > 0 %}
+                                    <span class="time-urgent">{{ "%.0f"|format(watch.time_remaining) }}s</span>
+                                {% else %}
+                                    <span class="time-urgent">ENDED</span>
+                                {% endif %}
+                            {% else %}
+                                Unknown
+                            {% endif %}
+                        </td>
+                        <td>£{{ "%.2f"|format(watch.max_bid) }}</td>
+                        <td><span class="badge badge-active">{{ watch.status }}</span></td>
+                        <td>
+                            <button class="cancel" onclick="cancelWatch('{{ watch.id }}')">Cancel</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty">No active watches</div>
+            {% endif %}
+        </div>
+
+        <div class="card">
+            <h2>Scheduled Jobs ({{ jobs|length }})</h2>
+            {% if jobs %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Job ID</th>
+                        <th>Next Run</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for job in jobs %}
+                    <tr>
+                        <td><code>{{ job.id }}</code></td>
+                        <td>{{ job.next_run_time or "Pending" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty">No scheduled jobs</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        async function cancelWatch(watchId) {
+            if (!confirm('Cancel this watch?')) return;
+
+            try {
+                const response = await fetch(`/api/watches/${watchId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert('Watch cancelled');
+                    location.reload();
+                } else {
+                    alert('Failed to cancel watch');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        document.getElementById('watchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const data = {
+                item_id: formData.get('item_id'),
+                max_bid: parseFloat(formData.get('max_bid')),
+                source: 'web'
+            };
+
+            try {
+                const response = await fetch('/api/watches', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    alert('Watch added successfully');
+                    location.reload();
+                } else {
+                    const error = await response.json();
+                    alert('Failed to add watch: ' + JSON.stringify(error));
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>

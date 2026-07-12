@@ -1,0 +1,21 @@
+services:
+  sniper:
+    build: .
+    container_name: ebay-sniper
+    ports:
+      - "${WEB_PORT:-8088}:8088"
+    volumes:
+      - sniper-data:/data
+    env_file:
+      - .env.local
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8088/api/status', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  sniper-data:
+    driver: local

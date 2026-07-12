@@ -1,0 +1,43 @@
+# Local environment files - contain secrets
+.env
+.env.local
+.env.local.backup-*
+
+# Runtime data - SQLite database
+data/*.db
+data/*.db-shm
+data/*.db-wal
+
+# Python virtual environments
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Scratch files
+=2.0.0
+
+# IDE/editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Temporary files
+*.tmp
+*.bak
+*.log
