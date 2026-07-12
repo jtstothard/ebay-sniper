@@ -26,8 +26,7 @@ class WatchStore:
     def _init_db(self):
         """Initialize database schema"""
         with sqlite3.connect(self.db_path) as conn:
-            conn.execute(
-                """
+            conn.execute("""
                 CREATE TABLE IF NOT EXISTS watches (
                     id TEXT PRIMARY KEY,
                     item_id TEXT NOT NULL,
@@ -46,11 +45,9 @@ class WatchStore:
                     notes TEXT,
                     source TEXT DEFAULT 'manual'
                 )
-            """
-            )
+            """)
 
-            conn.execute(
-                """
+            conn.execute("""
                 CREATE TABLE IF NOT EXISTS tokens (
                     id INTEGER PRIMARY KEY,
                     token_type TEXT NOT NULL,
@@ -62,11 +59,9 @@ class WatchStore:
                     created_at TEXT NOT NULL,
                     updated_at TEXT
                 )
-            """
-            )
+            """)
 
-            conn.execute(
-                """
+            conn.execute("""
                 CREATE TABLE IF NOT EXISTS bid_log (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     watch_id TEXT NOT NULL,
@@ -75,8 +70,7 @@ class WatchStore:
                     details TEXT,
                     FOREIGN KEY (watch_id) REFERENCES watches(id)
                 )
-            """
-            )
+            """)
 
             conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_watches_status ON watches(status)"
@@ -133,9 +127,7 @@ class WatchStore:
         """Get a watch by ID"""
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
-            cur = conn.execute(
-                "SELECT * FROM watches WHERE id = ?", (watch_id,)
-            )
+            cur = conn.execute("SELECT * FROM watches WHERE id = ?", (watch_id,))
             row = cur.fetchone()
             if row:
                 return dict(row)
@@ -240,9 +232,7 @@ class WatchStore:
             )
             return [dict(row) for row in cur.fetchall()]
 
-    def get_active_watches_due_before(
-        self, timestamp: str
-    ) -> list[dict]:
+    def get_active_watches_due_before(self, timestamp: str) -> list[dict]:
         """Get active watches that are due before a timestamp (for scheduler)"""
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
@@ -318,9 +308,7 @@ class WatchStore:
                 )
             conn.commit()
 
-    def get_token(
-        self, token_type: str, environment: str
-    ) -> Optional[dict]:
+    def get_token(self, token_type: str, environment: str) -> Optional[dict]:
         """Get stored OAuth token"""
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row

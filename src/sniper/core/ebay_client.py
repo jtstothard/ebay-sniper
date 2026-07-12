@@ -6,8 +6,8 @@ from typing import Any, Optional
 
 import httpx
 
-from .auth import AuthManager
 from ..config import config
+from .auth import AuthManager
 
 logger = logging.getLogger(__name__)
 
@@ -48,9 +48,7 @@ class eBayClient:
             response.raise_for_status()
             return response.json()
 
-    async def search_auctions(
-        self, query: str, limit: int = 20
-    ) -> list[dict]:
+    async def search_auctions(self, query: str, limit: int = 20) -> list[dict]:
         """Search for auction listings using Browse API
 
         Args:
@@ -111,9 +109,7 @@ class eBayClient:
         )
         return {"itemId": item_id, "bidding": []}
 
-    async def place_proxy_bid(
-        self, item_id: str, max_amount: float
-    ) -> dict:
+    async def place_proxy_bid(self, item_id: str, max_amount: float) -> dict:
         """Place a proxy bid using Offer API
 
         Note: Currently stubbed. Requires buy.offer.auction scope.

@@ -154,6 +154,7 @@ Look for `scope` in the response. If you see `https://api.ebay.com/oauth/api_sco
 - Verify eBay API credentials are valid
 - Check the service status endpoint for errors
 - Ensure you're using a valid eBay item ID
+- **Important:** CLI/MCP watch additions require service restart to schedule. Use web/Telegram/API for immediate execution. See [docs/SOURCE-OF-TRUTH.md](docs/SOURCE-OF-TRUTH.md)
 
 ### Telegram bot not responding
 - Verify `TELEGRAM_BOT_TOKEN` is correct

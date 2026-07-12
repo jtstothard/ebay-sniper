@@ -2,17 +2,17 @@
 
 import html
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
 from .config import config
-from .core.db import WatchStore
-from .core.sniper import SniperEngine
 from .core.auth import AuthManager
+from .core.db import WatchStore
 from .core.ebay_client import eBayClient
 from .core.ntp import NTPSync
+from .core.sniper import SniperEngine
 from .scheduler import SniperScheduler
 
 logger = logging.getLogger(__name__)
@@ -35,7 +35,9 @@ class TelegramBot:
         self.ebay_client = ebay_client
 
         # Create application
-        self.application = Application.builder().token(config.TELEGRAM_BOT_TOKEN).build()
+        self.application = (
+            Application.builder().token(config.TELEGRAM_BOT_TOKEN).build()
+        )
 
         # Register handlers
         self.application.add_handler(CommandHandler("watch", self.watch_command))
@@ -213,7 +215,9 @@ class TelegramBot:
                 item_id = item.get("itemId", "Unknown")
 
                 # Extract numeric ID
-                numeric_id = html.escape(item_id.split("|")[1] if "|" in item_id else item_id)
+                numeric_id = html.escape(
+                    item_id.split("|")[1] if "|" in item_id else item_id
+                )
 
                 msg += (
                     f"{i}. <b>{title}...</b>\n"

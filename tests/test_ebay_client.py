@@ -1,10 +1,11 @@
 """Unit tests for eBayClient"""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from sniper.core.ebay_client import eBayClient
+import pytest
+
 from sniper.core.auth import AuthManager
+from sniper.core.ebay_client import eBayClient
 
 
 @pytest.fixture
@@ -35,9 +36,7 @@ def test_normalize_item_id_v1_format(ebay_client):
 
 def test_normalize_item_id_url(ebay_client):
     """Test normalizing eBay URL"""
-    result = eBayClient._normalize_item_id(
-        "https://www.ebay.co.uk/itm/287456575036"
-    )
+    result = eBayClient._normalize_item_id("https://www.ebay.co.uk/itm/287456575036")
     assert result == "v1|287456575036|0"
 
 
@@ -49,9 +48,7 @@ def test_extract_numeric_id(ebay_client):
     result = eBayClient.extract_numeric_id("v1|287456575036|0")
     assert result == "287456575036"
 
-    result = eBayClient.extract_numeric_id(
-        "https://www.ebay.co.uk/itm/287456575036"
-    )
+    result = eBayClient.extract_numeric_id("https://www.ebay.co.uk/itm/287456575036")
     assert result == "287456575036"
 
 

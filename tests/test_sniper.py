@@ -2,13 +2,14 @@
 
 import os
 import tempfile
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from sniper.core.db import WatchStore
 from sniper.core.ebay_client import eBayClient
-from sniper.core.sniper import SniperEngine
 from sniper.core.ntp import NTPSync
+from sniper.core.sniper import SniperEngine
 
 
 @pytest.fixture
@@ -54,9 +55,7 @@ async def test_add_watch(sniper: SniperEngine, mock_ebay_client):
         "price": {"value": "30.00", "currency": "GBP"},
     }
 
-    watch = await sniper.add_watch(
-        item_id="287456575036", max_bid=50.00, source="test"
-    )
+    watch = await sniper.add_watch(item_id="287456575036", max_bid=50.00, source="test")
 
     assert watch is not None
     assert watch["title"] == "Test Item"
@@ -209,7 +208,9 @@ def test_get_watch_not_found(sniper: SniperEngine):
 
 
 @pytest.mark.asyncio
-async def test_execute_snipe_success(sniper: SniperEngine, db: WatchStore, mock_ebay_client):
+async def test_execute_snipe_success(
+    sniper: SniperEngine, db: WatchStore, mock_ebay_client
+):
     """Test successful snipe execution"""
     watch_id = db.add_watch(
         item_id="v1|287456575036|0",

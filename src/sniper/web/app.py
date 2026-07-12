@@ -11,11 +11,11 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
 from ..config import config
-from ..core.db import WatchStore
-from ..core.sniper import SniperEngine
 from ..core.auth import AuthManager
+from ..core.db import WatchStore
 from ..core.ebay_client import eBayClient
 from ..core.ntp import NTPSync
+from ..core.sniper import SniperEngine
 from ..scheduler import SniperScheduler
 
 logger = logging.getLogger(__name__)

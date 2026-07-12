@@ -5,14 +5,14 @@ import logging
 from typing import Any
 
 from mcp.server import Server
-from mcp.types import Tool, TextContent
+from mcp.types import TextContent, Tool
 
 from .config import config
-from .core.db import WatchStore
-from .core.sniper import SniperEngine
 from .core.auth import AuthManager
+from .core.db import WatchStore
 from .core.ebay_client import eBayClient
 from .core.ntp import NTPSync
+from .core.sniper import SniperEngine
 
 logger = logging.getLogger(__name__)
 
@@ -172,7 +172,9 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
 
             if not watches:
                 return [
-                    TextContent(type="text", text=f"No watches found (status: {status_filter})")
+                    TextContent(
+                        type="text", text=f"No watches found (status: {status_filter})"
+                    )
                 ]
 
             text = f"{len(watches)} watch(es) found (status: {status_filter}):\n\n"
@@ -232,9 +234,15 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             success = await sniper.cancel_watch(watch_id)
 
             if success:
-                return [TextContent(type="text", text=f"Watch {watch_id} cancelled successfully")]
+                return [
+                    TextContent(
+                        type="text", text=f"Watch {watch_id} cancelled successfully"
+                    )
+                ]
             else:
-                return [TextContent(type="text", text=f"Failed to cancel watch {watch_id}")]
+                return [
+                    TextContent(type="text", text=f"Failed to cancel watch {watch_id}")
+                ]
 
         elif name == "search_auctions":
             query = arguments.get("query")
@@ -246,7 +254,9 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             results = await ebay_client.search_auctions(query, limit)
 
             if not results:
-                return [TextContent(type="text", text=f"No results found for '{query}'")]
+                return [
+                    TextContent(type="text", text=f"No results found for '{query}'")
+                ]
 
             text = f"Found {len(results)} results for '{query}':\n\n"
             for i, item in enumerate(results, 1):

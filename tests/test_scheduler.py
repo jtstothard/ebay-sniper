@@ -39,10 +39,16 @@ def test_schedule_watch_uses_serializable_job_functions(scheduler):
 
 
 @pytest.mark.parametrize("env_value", ["/data/sniper.db", "/data/does-not-matter.db"])
-def test_resolve_db_path_falls_back_from_unwritable_data(monkeypatch, tmp_path, env_value):
+def test_resolve_db_path_falls_back_from_unwritable_data(
+    monkeypatch, tmp_path, env_value
+):
     monkeypatch.setenv("DB_PATH", env_value)
     monkeypatch.setattr(config_module.os, "access", lambda path, mode: False)
     monkeypatch.setattr(config_module.Path, "exists", lambda self: str(self) != "/data")
 
-    expected = str(config_module.Path(config_module.__file__).parent.parent.parent / "data" / "sniper.db")
+    expected = str(
+        config_module.Path(config_module.__file__).parent.parent.parent
+        / "data"
+        / "sniper.db"
+    )
     assert config_module._resolve_db_path() == expected

@@ -21,6 +21,7 @@ Please describe the tests that you ran to verify your changes.
 - [ ] Unit tests pass (`pytest tests/`)
 - [ ] Manual testing with interface: [web / CLI / Telegram / MCP]
 - [ ] Tested with eBay sandbox: [yes / no]
+- [ ] CI checks pass (see GitHub Actions tab)
 
 Provide instructions on how to reproduce the testing scenario if relevant.
 

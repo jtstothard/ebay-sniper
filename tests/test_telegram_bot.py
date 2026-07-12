@@ -40,7 +40,7 @@ async def test_watch_command_shows_actionable_example(monkeypatch):
     await bot.watch_command(update, context)
 
     update.message.reply_text.assert_awaited_once()
-    message, = update.message.reply_text.await_args.args
+    (message,) = update.message.reply_text.await_args.args
     assert "/watch 206406145417 650" in message
     assert "parse_mode" not in update.message.reply_text.await_args.kwargs
 
@@ -74,7 +74,7 @@ async def test_search_command_escapes_html_entities(monkeypatch):
     await bot.search_command(update, context)
 
     update.message.reply_text.assert_awaited_once()
-    message, = update.message.reply_text.await_args.args
+    (message,) = update.message.reply_text.await_args.args
     assert "&lt;max_bid&gt;" in message
     assert "<max_bid>" not in message
     assert "Saphire Radeon &lt;max_bid&gt; &amp; more" in message

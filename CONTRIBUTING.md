@@ -1,105 +1,265 @@
-# Contributing to eBay Sniper
+# Contributing
 
-Thanks for your interest in contributing! This is a self-hosted project maintained by a single developer, so contributions are welcome but may take time to review.
+Thank you for considering contributing to eBay Sniper! This document outlines how to contribute.
 
-## Setting Up Development
+## Getting Started
 
-1. **Fork and clone**:
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/ebay-sniper.git
-   cd ebay-sniper
-   ```
+### Prerequisites
+- Python 3.12+ or Docker
+- eBay Developer Account (for testing)
+- git
 
-2. **Create a virtual environment**:
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate  # or `.venv\Scripts\activate` on Windows
-   ```
+### Development Setup
 
-3. **Install dependencies**:
-   ```bash
-   pip install -e ".[dev]"
-   ```
+```bash
+# Clone the repository
+git clone <your-repo-url>
+cd ebay-sniper
 
-4. **Configure environment**:
-   ```bash
-   cp .env.example .env.local
-   # Edit .env.local with your eBay credentials (needed for integration tests)
-   ```
+# Copy environment template
+cp .env.example .env.local
+# Edit .env.local with your eBay credentials
 
-## Development Workflow
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-1. **Create a branch**:
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
+# Install dependencies
+pip install -e .[dev]
 
-2. **Make your changes**:
-   - Write tests for new functionality
-   - Ensure existing tests pass
-   - Follow the existing code style
+# Run tests
+pytest tests/
 
-3. **Run tests**:
-   ```bash
-   pytest tests/
-   ```
+# Run the service
+python -m sniper.main
+```
 
-4. **Commit**:
-   ```bash
-   git add .
-   git commit -m "Brief description of changes"
-   ```
+### Docker Development
 
-5. **Push and create PR**:
-   ```bash
-   git push origin feature/your-feature-name
-   ```
+```bash
+# Build and start
+docker compose up -d
+
+# Run tests in container
+docker compose exec sniper pytest tests/
+
+# View logs
+docker compose logs -f sniper
+```
+
+## Project Structure
+
+```
+ebay-sniper/
+├── src/sniper/
+│   ├── core/           # Core logic (db, sniper, auth, ebay_client, ntp)
+│   ├── web/            # FastAPI app + templates
+│   ├── scheduler.py    # APScheduler setup
+│   ├── telegram_bot.py # Telegram bot
+│   ├── cli.py          # CLI (Typer)
+│   ├── mcp_server.py   # MCP server
+│   └── main.py         # Entry point
+├── tests/              # Unit tests
+├── docs/               # Documentation
+├── skill/              # Hermes skill
+├── pyproject.toml      # Project dependencies
+├── Dockerfile          # Container build
+└── docker-compose.yml  # Orchestration
+```
 
 ## Code Style
 
-- Follow PEP 8 for Python code
+### Python
+- Follow [PEP 8](https://peps8.org/)
+- Use [Black](https://github.com/psf/black) for formatting
+- Use [isort](https://pycqa.github.io/isort/) for import sorting
 - Use type hints where appropriate
-- Keep functions focused and small
-- Add docstrings for public functions
+- Max line length: 100 characters
+
+### Running Formatters
+```bash
+# Format code
+black src/ tests/
+isort src/ tests/
+
+# Check formatting
+black --check src/ tests/
+isort --check-only src/ tests/
+```
+
+### Pre-commit Hooks (Recommended)
+The project uses pre-commit hooks to enforce code quality. Install them before pushing changes:
+
+```bash
+# Install pre-commit framework
+pip install pre-commit
+
+# Install project hooks
+pre-commit install
+
+# Run hooks manually
+pre-commit run --all-files
+```
+
+Hooks run automatically on `git commit`. CI also runs the same checks, so fix any failures before pushing.
+
+### Testing
+- Write tests for new features
+- Use pytest for test framework
+- Aim for >80% code coverage
+- Test both success and error paths
+
+```bash
+# Run all tests
+pytest tests/
+
+# Run with coverage
+pytest tests/ --cov=src/sniper --cov-report=html
+
+# Run specific test
+pytest tests/test_sniper.py::test_add_watch
+```
+
+## Making Changes
+
+### Branch Naming
+Use descriptive branch names:
+- `feature/feature-name`
+- `fix/bug-description`
+- `docs/documentation-update`
+
+### Commit Messages
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
+```
+type(scope): description
+
+[optional body]
+
+[optional footer]
+```
+
+Types:
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation changes
+- `style`: Code style changes (formatting, etc.)
+- `refactor`: Code refactoring
+- `test`: Test changes
+- `chore`: Maintenance tasks
+
+Examples:
+```
+feat(cli): add bulk watch command
+
+Add support for adding multiple watches at once via CLI.
+
+Closes #42
+```
+
+```
+fix(auth): handle expired user token gracefully
+
+Add retry logic when user token is expired and needs refresh.
+```
+
+### Pull Requests
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add/update tests
+5. Update documentation if needed
+6. Ensure all tests pass
+7. Submit a pull request
+
+PR Description Template:
+```markdown
+## Description
+Brief description of changes
+
+## Type of Change
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Breaking change
+- [ ] Documentation update
 
 ## Testing
+Describe how you tested your changes
 
-- Write unit tests for new functionality
-- Ensure `pytest tests/` passes before submitting
-- For changes affecting eBay API interactions, document expected behavior with stub responses
+## Checklist
+- [ ] Code follows project style
+- [ ] Tests added/updated
+- [ ] Documentation updated
+- [ ] All tests pass
+```
 
-## What We're Looking For
+## Development Workflow
 
-- Bug fixes
-- Documentation improvements
-- Feature additions that align with the project scope
-- Performance improvements
+### Adding a New Feature
 
-## Scope and Support Boundaries
+1. **Create an issue** (if not already exists)
+2. **Create branch** from `master`
+3. **Implement feature** following code style
+4. **Add tests** for the feature
+5. **Update documentation** (README, ARCHITECTURE.md, etc.)
+6. **Run tests** to ensure nothing breaks
+7. **Submit PR** with clear description
 
-This project is designed for self-hosted use with the following scope:
+### Fixing a Bug
 
-**In Scope**:
-- eBay UK auction monitoring
-- Bid placement via eBay Offer API (currently stubbed pending scope grant)
-- Multiple interfaces: web, CLI, Telegram, MCP
-- Docker deployment
+1. **Create issue** describing the bug
+2. **Create branch** for the fix
+3. **Add test** that reproduces the bug
+4. **Fix the bug**
+5. **Verify test passes**
+6. **Submit PR** referencing the issue
 
-**Out of Scope**:
-- Multi-user SaaS features
-- Other eBay regional sites (UK only)
-- Commercial auction platforms
-- Analytics/dashboard features beyond basic watch management
+### Updating Dependencies
 
-## Security
+1. **Update pyproject.toml** with new versions
+2. **Test locally** to ensure compatibility
+3. **Run full test suite**
+4. **Submit PR** with changelog notes
 
-If you find a security vulnerability, please follow the process in [SECURITY.md](SECURITY.md) rather than opening a public issue.
+## Areas Needing Help
 
-## Communication
+See [GitHub Issues](https://github.com/<your-username>/ebay-sniper/issues) for current needs.
 
-- For bugs: Open an issue with reproduction steps
-- For questions: Use GitHub Discussions (if enabled) or issues tagged `question`
-- For PRs: Provide context on what problem your change solves
+Common areas:
+- **Tests**: Improve test coverage
+- **Documentation**: Clarify confusing sections
+- **Bug fixes**: Address reported issues
+- **Features**: Implement requested features
+
+## Important Notes
+
+### Bid Placement Stub
+Remember that bid placement is stubbed until eBay grants the `buy.offer.auction` scope. When implementing bid-related features:
+- Work with the stub in place
+- Code should work with both stubbed and live modes
+- Document any scope-related requirements
+
+### Testing with Real eBay API
+- Use sandbox credentials for testing when possible
+- Rate limit your requests
+- Don't add real watches for expensive items during testing
+- Clean up test data
+
+### Docker Changes
+- Test Dockerfile changes locally
+- Ensure docker-compose.yml works
+- Update documentation if deployment changes
+
+### Breaking Changes
+- Document clearly in PR description
+- Update migration guide if needed
+- Consider backward compatibility
+
+## Questions?
+
+- Check existing [GitHub Issues](https://github.com/<your-username>/ebay-sniper/issues)
+- Review [docs/](docs/) for detailed information
+- Open a new issue if you can't find an answer
 
 ## License
 

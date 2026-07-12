@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 from apscheduler.executors.pool import ThreadPoolExecutor
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
@@ -49,14 +49,10 @@ class SniperScheduler:
         self.ntp = ntp
 
         # Setup job store
-        jobstores = {
-            "default": SQLAlchemyJobStore(url=f"sqlite:///{config.DB_PATH}")
-        }
+        jobstores = {"default": SQLAlchemyJobStore(url=f"sqlite:///{config.DB_PATH}")}
 
         # Setup executor
-        executors = {
-            "default": ThreadPoolExecutor(10)
-        }
+        executors = {"default": ThreadPoolExecutor(10)}
 
         # Create scheduler
         self.scheduler = BackgroundScheduler(
@@ -177,7 +173,9 @@ class SniperScheduler:
                             args=[watch_id],
                             replace_existing=True,
                         )
-                        logger.info(f"Scheduled retry for watch {watch_id} at {retry_time}")
+                        logger.info(
+                            f"Scheduled retry for watch {watch_id} at {retry_time}"
+                        )
 
         except Exception as e:
             logger.error(f"Error executing snipe for watch {watch_id}: {e}")
@@ -205,7 +203,9 @@ class SniperScheduler:
                 {
                     "id": job.id,
                     "name": job.name,
-                    "next_run_time": next_run_time.isoformat() if next_run_time else None,
+                    "next_run_time": (
+                        next_run_time.isoformat() if next_run_time else None
+                    ),
                 }
             )
         return jobs

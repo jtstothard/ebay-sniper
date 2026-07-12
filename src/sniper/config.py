@@ -77,7 +77,9 @@ class Config:
     NTP_SERVER: str = os.getenv("NTP_SERVER", "pool.ntp.org")
 
     # Bid placement stub (until eBay grants buy.offer.auction scope)
-    BID_PLACEMENT_STUBBED: bool = os.getenv("BID_PLACEMENT_STUBBED", "true").lower() in (
+    BID_PLACEMENT_STUBBED: bool = os.getenv(
+        "BID_PLACEMENT_STUBBED", "true"
+    ).lower() in (
         "true",
         "1",
     )

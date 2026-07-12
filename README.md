@@ -1,121 +1,44 @@
-# eBay Sniper Service
+# eBay Sniper
 
-A self-hosted auction sniping service for eBay UK. Monitors auctions and places proxy bids in the final seconds via the eBay Offer API. Supports multiple interfaces: Telegram bot, web dashboard, CLI, and MCP server for Hermes integration.
+A self-hosted auction monitoring service for eBay. Search for auctions, add them to your watch list, and get notified when they're ending. Bid placement is currently stubbed pending eBay API scope approval.
 
-## Features
+## What Works Today
 
-- **Smart Sniping**: Automatically places bids 8 seconds before auction end
-- **Multiple Interfaces**: Web dashboard, Telegram bot, CLI, and MCP server
-- **NTP Sync**: Accurate timing with NTP clock synchronization
-- **Retry Logic**: Failed bids are retried at 3 seconds before end
-- **SQLite Storage**: Simple, reliable database with bid logging
-- **Docker Ready**: Easy deployment with docker-compose
+- **Search**: Find active auctions via eBay Browse API (CLI, web, Telegram, MCP)
+- **Watch**: Add items to your watch list with max-bid targets
+- **Monitor**: Track auctions via web dashboard, Telegram bot, CLI, or MCP server
+- **Notifications**: Get alerts via Telegram when auctions end or status changes
 
-## Architecture
+## What's Pending
 
-```
-                    ┌─────────────────────────────────────────────────┐
-                    │           eBay Sniper Service                   │
-                    │           (Python / FastAPI)                    │
-                    │                                                 │
-                    │  ┌───────────┐  ┌────────────┐  ┌───────────┐  │
-                    │  │ FastAPI   │  │ Scheduler  │  │ eBay API  │  │
-                    │  │ Web Server│  │ (APScheduler│  │ Client    │  │
-                    │  │           │  │  + NTP)    │  │           │  │
-                    │  │ /api/*    │  │            │  │ Browse    │  │
-                    │  │ /dashboard│  │ triggers   │  │ Offer     │  │
-                    │  └─────┬─────┘  └──────┬─────┘  └─────┬─────┘ │
-                    │        │               │              │       │
-                    │  ┌─────┴─────┐         │              │       │
-                    │  │ MCP Server│         │              │       │
-                    │  │ (stdio)   │         │              │       │
-                    │  └─────┬─────┘         │              │       │
-                    │  ┌─────┴─────┐         │              │       │
-                    │  │ Telegram  │         │              │       │
-                    │  │ Bot       │         │              │       │
-                    │  └─────┬─────┘         │              │       │
-                    │        │               │              │       │
-                    │  ┌─────┴───────────────┴──────────────┴─────┐ │
-                    │  │         Core Logic (shared)               │ │
-                    │  │  - WatchStore (SQLite)                     │ │
-                    │  │  - SniperEngine (bid orchestration)        │ │
-                    │  │  - AuthManager (OAuth token store)         │ │
-                    │  │  - NotificationManager                     │ │
-                    │  └───────────────────────────────────────────┘ │
-                    └─────────────────────────────────────────────────┘
-```
+- **Bid Placement**: Currently stubbed. eBay requires manual approval for the `buy.offer.auction` OAuth scope before actual bids can be placed. The service logs stubbed bids and simulates success for testing workflows.
 
-## Installation
-
-### Docker (Recommended)
-
-1. Clone the repository
-2. Copy `.env.example` to `.env.local` and configure your credentials
-3. Run with docker-compose:
+## Quickstart (Docker - Recommended)
 
 ```bash
+# 1. Clone and configure
+git clone <your-repo-url>
+cd ebay-sniper
+cp .env.example .env.local
+# Edit .env.local with your eBay credentials
+
+# 2. Start the service
 docker compose up -d
+
+# 3. Access the dashboard
+open http://localhost:8088/dashboard
 ```
 
-The service will be available at `http://localhost:8088`
+See [SETUP.md](SETUP.md) for detailed setup instructions, including how to get eBay API credentials and configure Telegram.
 
-### Local Development
-
-1. Install dependencies:
-
-```bash
-pip install -e .
-```
-
-2. Configure environment variables (see `.env.example`)
-
-3. Run the service:
-
-```bash
-python -m sniper.main
-```
-
-## Configuration
-
-Configure via environment variables (see `.env.example`):
-
-- `EBAY_APP_ID`: eBay application ID (required)
-- `EBAY_CERT_ID`: eBay certificate ID (required)
-- `EBAY_DEV_ID`: eBay developer ID (required)
-- `EBAY_ENVIRONMENT`: `production` or `sandbox` (default: production)
-- `TELEGRAM_BOT_TOKEN`: Telegram bot token (optional)
-- `TELEGRAM_CHAT_ID`: Telegram chat ID for notifications (optional)
-- `WEB_PORT`: Web server port (default: 8088)
-- `BID_OFFSET_SECONDS`: Seconds before end to place bid (default: 8)
-- `BID_RETRY_OFFSET_SECONDS`: Retry offset (default: 3)
-
-## Usage
+## Interfaces
 
 ### Web Dashboard
-
-Open `http://localhost:8088/dashboard` in your browser.
-
-### CLI
-
-```bash
-# Search for auctions
-sniper search "nintendo switch"
-
-# Add a watch
-sniper watch 287456575036 --max-bid 50.00
-
-# List active watches
-sniper list
-
-# Cancel a watch
-sniper cancel <watch_id>
-
-# Check status
-sniper status
-```
+- URL: `http://localhost:8088/dashboard`
+- View active watches, add new ones, cancel existing watches
+- Auto-refreshes every 30 seconds
 
 ### Telegram Bot
-
 Commands:
 - `/watch <item_id_or_url> <max_bid>` - Add a watch
 - `/list` - List active watches
@@ -123,8 +46,34 @@ Commands:
 - `/search <query>` - Search eBay auctions
 - `/status` - Show service status
 
-### REST API
+Example:
+```
+/watch 287456575036 50.00
+```
 
+### CLI
+**Note:** CLI writes watches to the database but does not schedule jobs. For snipes to execute, use the web dashboard, Telegram bot, or REST API instead. See [docs/SOURCE-OF-TRUTH.md](docs/SOURCE-OF-TRUTH.md) for details.
+
+```bash
+# Search for auctions (safe - read-only)
+sniper search "nintendo switch"
+
+# List watches (safe - read-only from DB)
+sniper list
+
+# Check status (safe - read-only)
+sniper status
+
+# Add a watch (limited - stores to DB but does not schedule)
+sniper watch 287456575036 --max-bid 50.00
+# Service restart required to schedule this watch
+
+# Cancel a watch (limited - marks cancelled but does not unschedule job)
+sniper cancel <watch_id>
+# Service restart required to clear scheduled job
+```
+
+### REST API
 ```bash
 # List watches
 curl http://localhost:8088/api/watches
@@ -142,53 +91,112 @@ curl -X DELETE http://localhost:8088/api/watches/<watch_id>
 
 # Search auctions
 curl "http://localhost:8088/api/search?q=nintendo%20switch"
+
+# Service status
+curl http://localhost:8088/api/status
 ```
 
 ### MCP Server (Hermes Integration)
+**Note:** MCP server writes watches to the database but does not schedule jobs. For snipes to execute, use the web dashboard, Telegram bot, or REST API instead. See [docs/SOURCE-OF-TRUTH.md](docs/SOURCE-OF-TRUTH.md) for details.
 
 The MCP server exposes tools for programmatic watch management:
+- `add_watch(item_id, max_bid)` - Add a watch (limited - stores to DB but does not schedule)
+- `list_watches(status)` - List watches (safe - read-only from DB)
+- `get_watch(watch_id)` - Get watch details (safe - read-only)
+- `cancel_watch(watch_id)` - Cancel a watch (limited - marks cancelled but does not unschedule job)
+- `search_auctions(query)` - Search eBay (safe - read-only)
+- `get_status()` - Get service configuration (safe - read-only)
 
-- `add_watch(item_id, max_bid)` - Add a watch
-- `list_watches(status)` - List watches
-- `get_watch(watch_id)` - Get watch details
-- `cancel_watch(watch_id)` - Cancel a watch
-- `search_auctions(query)` - Search eBay
-- `get_status()` - Get service status
+## Architecture
 
-## Important Notes
-
-### Bid Placement is Stubbed
-
-Until eBay grants the `buy.offer.auction` scope, bid placement is **stubbed**. The service logs:
 ```
-STUB: bid not actually placed - item=..., max_amount=...
+┌─────────────────────────────────────────────────┐
+│           eBay Sniper Service                   │
+│           (Python / FastAPI)                    │
+│                                                 │
+│  ┌───────────┐  ┌────────────┐  ┌───────────┐  │
+│  │ FastAPI   │  │ Scheduler  │  │ eBay API  │  │
+│  │ Web Server│  │ (APScheduler│  │ Client    │  │
+│  │           │  │  + NTP)    │  │           │  │
+│  │ /api/*    │  │            │  │ Browse    │  │
+│  │ /dashboard│  │ triggers   │  │ Offer     │  │
+│  └─────┬─────┘  └──────┬─────┘  └─────┬─────┘ │
+│        │               │              │       │
+│  ┌─────┴─────┐         │              │       │
+│  │ MCP Server│         │              │       │
+│  │ (stdio)   │         │              │       │
+│  └─────┬─────┘         │              │       │
+│  ┌─────┴─────┐         │              │       │
+│  │ Telegram  │         │              │       │
+│  │ Bot       │         │              │       │
+│  └─────┬─────┘         │              │       │
+│        │               │              │       │
+│  ┌─────┴───────────────┴──────────────┴─────┐ │
+│  │         Core Logic (shared)               │ │
+│  │  - WatchStore (SQLite)                     │ │
+│  │  - SniperEngine (watch orchestration)      │ │
+│  │  - AuthManager (OAuth token store)         │ │
+│  │  - NotificationManager                     │ │
+│  └───────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────┘
 ```
 
-When the scope is granted, update `config.BID_PLACEMENT_STUBBED = false` and implement the real API call in `ebay_client.py`.
+## Configuration
 
-### Production Browse API Works
+All configuration is via environment variables. See `.env.example` for the complete list:
 
-The Browse API works in production and is used for:
-- Searching auctions
-- Fetching item details
-- Getting current prices
+**Required:**
+- `EBAY_APP_ID` - eBay application ID
+- `EBAY_CERT_ID` - eBay certificate ID
+- `EBAY_DEV_ID` - eBay developer ID
+- `EBAY_ENVIRONMENT` - `production` or `sandbox` (default: production)
+- `BID_PLACEMENT_STUBBED` - Set to `true` (default) until scope is granted
 
-### NTP Synchronization
+**Optional:**
+- `TELEGRAM_BOT_TOKEN` - Telegram bot token
+- `TELEGRAM_CHAT_ID` - Telegram chat ID for notifications
+- `WEB_PORT` - Web server port (default: 8088)
+- `BID_OFFSET_SECONDS` - Seconds before end to place bid (default: 8)
+- `NTP_SERVER` - NTP server for clock sync (default: pool.ntp.org)
 
-The service syncs with `pool.ntp.org` on startup to ensure accurate snipe timing. Check the NTP offset in the dashboard or via `/api/status`.
+## eBay API Scope Approval
 
-## Testing
+Bid placement requires the `buy.offer.auction` OAuth scope, which must be manually approved by eBay. Until you receive approval:
 
-Run tests with pytest:
+1. The service will log stubbed bids: `STUB: bid not actually placed`
+2. All other functionality (search, watch, monitor) works fully
+3. When approved, set `BID_PLACEMENT_STUBBED=false` in `.env.local`
 
-```bash
-pytest tests/
-```
+To request approval:
+1. Go to [eBay Developers](https://developer.ebay.com/)
+2. Navigate to your application settings
+3. Request the `buy.offer.auction` scope for production use
+
+## Troubleshooting
+
+### Service won't start
+- Check `.env.local` exists and contains required values
+- Verify eBay credentials are correct
+- Check logs: `docker compose logs -f sniper`
+
+### Can't search or add watches
+- Verify eBay API credentials are valid
+- Check `EBAY_ENVIRONMENT` matches your credentials
+- Visit `http://localhost:8088/api/status` for detailed error info
+
+### Telegram bot not responding
+- Verify `TELEGRAM_BOT_TOKEN` is correct
+- Ensure your account has messaged the bot first
+- Check logs for authentication errors
+
+### NTP sync errors
+- Check network connectivity
+- Try a different NTP server in `.env.local`
+- NTP sync is optional but recommended for accurate timing
 
 ## Development
 
 Project structure:
-
 ```
 ebay-sniper/
 ├── src/sniper/
@@ -204,6 +212,54 @@ ebay-sniper/
 ├── Dockerfile
 └── docker-compose.yml
 ```
+
+### Running tests
+```bash
+pytest tests/
+```
+
+See [DEVELOPER.md](DEVELOPER.md) for detailed development workflow, CI/CD setup, and pre-commit hooks.
+
+### CI/CD
+All pull requests run automated tests and code quality checks via GitHub Actions:
+- Unit tests (pytest)
+- Code formatting (black)
+- Import sorting (isort)
+- Coverage reporting (codecov)
+
+Run the same checks locally before pushing:
+```bash
+pip install -e '.[dev]'
+pip install pre-commit
+pre-commit run --all-files
+pytest tests/ -v
+```
+
+### Local development setup
+```bash
+# Install dependencies
+pip install -e .
+
+# Run the service
+python -m sniper.main
+```
+
+## Limitations
+
+- **Bid placement**: Stubbed until eBay grants `buy.offer.auction` scope
+- **Marketplace**: Currently configured for eBay GB (UK), but other marketplaces supported
+- **Single user**: No multi-user support - all watches share the same SQLite database
+- **Clock accuracy**: NTP sync helps but relies on system clock and network latency
+
+## Documentation
+
+Comprehensive documentation is available:
+- **[docs/INDEX.md](docs/INDEX.md)** - Complete documentation index
+- **[SETUP.md](SETUP.md)** - Detailed setup guide
+- **[docs/INTERFACES.md](docs/INTERFACES.md)** - Interface usage guide
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** - System architecture
+- **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[docs/LIMITATIONS.md](docs/LIMITATIONS.md)** - Current limitations and design decisions
 
 ## License
 

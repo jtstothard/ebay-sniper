@@ -3,12 +3,12 @@
 import base64
 import json
 import time
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 import httpx
 
-from .db import WatchStore
 from ..config import config
+from .db import WatchStore
 
 
 class AuthManager:
@@ -52,9 +52,7 @@ class AuthManager:
 
         # Calculate expiry (subtract 5 min buffer)
         expires_in = token_data.get("expires_in", 7200)
-        expires_at = datetime.now(timezone.utc) + timedelta(
-            seconds=expires_in - 300
-        )
+        expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in - 300)
 
         # Store token
         self.db.store_token(

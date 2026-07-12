@@ -1,13 +1,13 @@
 """Core sniper engine for watch management and bid orchestration"""
 
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
+from ..config import config
 from .db import WatchStore
 from .ebay_client import eBayClient
 from .ntp import NTPSync
-from ..config import config
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +128,9 @@ class SniperEngine:
             return False
 
         if watch["status"] != "active":
-            logger.warning(f"Watch {watch_id} is not active (status: {watch['status']})")
+            logger.warning(
+                f"Watch {watch_id} is not active (status: {watch['status']})"
+            )
             return False
 
         # Update status
@@ -179,14 +181,19 @@ class SniperEngine:
             return {"success": False, "error": "Watch not found"}
 
         if watch["status"] != "active":
-            logger.warning(f"Watch {watch_id} is not active (status: {watch['status']})")
+            logger.warning(
+                f"Watch {watch_id} is not active (status: {watch['status']})"
+            )
             return {"success": False, "error": f"Watch not active: {watch['status']}"}
 
         # Log bid attempt
         self.db.log_event(
             watch_id,
             "bid_attempt",
-            {"max_bid": watch["max_bid"], "timestamp": datetime.now(timezone.utc).isoformat()},
+            {
+                "max_bid": watch["max_bid"],
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            },
         )
 
         try:

@@ -7,11 +7,11 @@ from datetime import datetime
 import typer
 
 from .config import config
-from .core.db import WatchStore
-from .core.sniper import SniperEngine
 from .core.auth import AuthManager
+from .core.db import WatchStore
 from .core.ebay_client import eBayClient
 from .core.ntp import NTPSync
+from .core.sniper import SniperEngine
 
 app = typer.Typer(
     name="sniper",
@@ -150,7 +150,9 @@ def status():
     typer.echo(f"  NTP Synced: {'Yes' if synced else 'No'}")
     if synced:
         typer.echo(f"  NTP Offset: {ntp.offset:.6f}s")
-    typer.echo(f"  Bid Placement: {'STUBBED' if config.BID_PLACEMENT_STUBBED else 'Active'}")
+    typer.echo(
+        f"  Bid Placement: {'STUBBED' if config.BID_PLACEMENT_STUBBED else 'Active'}"
+    )
     typer.echo(f"  Marketplace: {config.EBAY_MARKETPLACE}")
     typer.echo()
 
