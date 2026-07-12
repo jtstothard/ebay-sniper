@@ -1,5 +1,7 @@
 # eBay Sniper
 
+[☕ Ko-fi](https://ko-fi.com/trshpotato)
+
 A self-hosted auction monitoring service for eBay. Search for auctions, add them to your watch list, and get notified when they're ending. Bid placement is currently stubbed pending eBay API scope approval.
 
 ## What Works Today
